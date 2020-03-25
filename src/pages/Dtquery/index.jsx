@@ -1,9 +1,10 @@
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import React, { useState, useEffect } from 'react';
-import { Spin, Row, Col, Divider, Input, Select } from 'antd';
-import { queryClusterList } from './service.js';
+import { Spin, Row, Col, Divider, Input, Select, Switch, Tooltip} from 'antd';
+import { queryClusterList, saveCluster } from './service.js';
 import styles from './index.less';
 import UrlGrid from './UrlGrid';
+import ClusterModal from './ClusterModal';
 
 const Dtquery = () => {
   const [loading, setLoading] = useState(true);
@@ -12,6 +13,7 @@ const Dtquery = () => {
   const [objectId, setObjectId] = useState('');
   const [dtId, setDtId] = useState('');
   const [vdc, setVdc] = useState('');
+  const [needProxy, setNeedProxy] = useState(false);
   const [clusterOptionList, setClusterOptionList] = useState([]);
   const generateChunkUrl = chunkId => {
     return clusterIps.split(" ").map(ip =>{
@@ -94,6 +96,17 @@ const Dtquery = () => {
               onChange={event => setClusterIps(event.target.value)}
             />
           </Col>
+          <Col>
+            <ClusterModal ips={clusterIps} effectMethod={saveCluster}></ClusterModal>
+          </Col>
+        </Row>
+        <Row gutter={[10,10]}>
+          <Col flex="none">启用代理</Col>
+          <Tooltip title="使用代理的方式访问未开启9101端口的cluster">
+            <Col flex="50px">
+              <Switch checkedChildren="是" unCheckedChildren="否" defaultChecked={false} onChange={checked => setNeedProxy(checked)}/>
+            </Col>
+          </Tooltip>
         </Row>
         <Divider
           orientation="left"
@@ -137,9 +150,9 @@ const Dtquery = () => {
           </Col>
         </Row>
       </div>
-      <UrlGrid title="Chunk" urlList={generateChunkUrl(chunkId)} isShow={clusterIps&&chunkId}/>
-      <UrlGrid title="RR" urlList={generateRRUrl(chunkId)} isShow={clusterIps&&chunkId}/>
-      <UrlGrid title="Object" urlList={generateObjectUrl(objectId)} isShow={clusterIps&&objectId}/>
+      <UrlGrid title="Chunk" urlList={generateChunkUrl(chunkId)} isShow={clusterIps&&chunkId} needProxy={needProxy}/>
+      <UrlGrid title="RR" urlList={generateRRUrl(chunkId)} isShow={clusterIps&&chunkId} needProxy={needProxy}/>
+      <UrlGrid title="Object" urlList={generateObjectUrl(objectId)} isShow={clusterIps&&objectId} needProxy={needProxy}/>
       <div
         style={{
           paddingTop: 100,
