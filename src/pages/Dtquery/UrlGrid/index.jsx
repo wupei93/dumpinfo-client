@@ -15,12 +15,12 @@ function proxyUrl(needProxy,url) {
 
 const UrlGrid = props => {
   const { title, urlList=[], isShow, needProxy=false } = props;
+  if(!isShow){
+    return null;
+  }
   const urls = urlList.map(url => <Row><a target="view_window" href={proxyUrl(needProxy,url)}>{url}</a></Row>);
   const openAll = () => {
     urlList.forEach(url => window.open(proxyUrl(needProxy,url), '_blank').location)
-  }
-  if(!isShow){
-    return null;
   }
   return (
       <div style={{display:isShow}}>

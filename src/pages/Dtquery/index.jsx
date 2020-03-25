@@ -8,33 +8,85 @@ import ClusterModal from './ClusterModal';
 
 const Dtquery = () => {
   const [loading, setLoading] = useState(true);
-  const [clusterIps, setClusterIps] = useState("");
+  const [cluster, setCluster] = useState({});
   const [chunkId, setChunkId] = useState('');
   const [objectId, setObjectId] = useState('');
   const [dtId, setDtId] = useState('');
   const [vdc, setVdc] = useState('');
   const [needProxy, setNeedProxy] = useState(false);
+  const [clusterList, setClusterList] = useState([]);
   const [clusterOptionList, setClusterOptionList] = useState([]);
   const generateChunkUrl = chunkId => {
-    return clusterIps.split(" ").map(ip =>{
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>{
       return "http://".concat(ip)
                       .concat(":9101/diagnostic/CT/1/DumpAllKeys/CHUNK?showvalue=gpb&chunkId=")
                       .concat(chunkId);
     })
   }
   const generateRRUrl = chunkId => {
-    return clusterIps.split(" ").map(ip =>{
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>{
       return "http://".concat(ip)
                       .concat(":9101/diagnostic/RR/0/DumpAllKeys/REPO_REFERENCE?chunkId=")
                       .concat(chunkId);
     })
   }
   const generateObjectUrl = objectId => {
-    return clusterIps.split(" ").map(ip =>{
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>{
       return "http://".concat(ip)
                       .concat(":9101/diagnostic/OB/0/DumpAllKeys/OBJECT_TABLE_KEY?showvalue=gpb&objectId=")
                       .concat(objectId);
     })
+  }
+  const generateJRUrl = () => {
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>{
+      return "http://".concat(ip)
+                      .concat(":9101/diagnostic/PR/1/DumpAllKeys/DIRECTORYTABLE_RECORD?type=JOURNAL_REGION&showvalue=gpb&dtId=")
+                      .concat(dtId).concat("&zone=").concat(vdc);
+    })
+  }
+  const generateJounalContentUrl = () => {
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>{
+      return "http://".concat(ip)
+                      .concat(":9101/journalcontent/")
+                      .concat(dtId).concat("?zone=").concat(vdc);
+    })
+  }
+  const generateBIUrl = () => {
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>{
+      return "http://".concat(ip)
+                      .concat(":9101/diagnostic/PR/1/DumpAllKeys/DIRECTORYTABLE_RECORD?type=BPLUSTREE_INFO&showvalue=gpb&dtId=")
+                      .concat(dtId).concat("&zone=").concat(vdc);
+    })
+  }
+  const generateCleanupJobUrl = () => {
+    if(!dtId || dtId.indexOf("_OB_") == -1){
+      return;
+    }
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>
+      `http://${ip}:9101/${dtId}/DELETE_JOB_TABLE_KEY?type=CLEANUP_JOB&objectId=XX`)
+  }
+  const generatePartialCleanupJobUrl = () => {
+    if(!dtId || dtId.indexOf("_OB_") == -1){
+      return;
+    }
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>
+      `http://${ip}:9101/${dtId}/DELETE_JOB_TABLE_KEY?type=PARTIALGC_CLEANUP_JOB&objectId=XX`)
+  }
+  const generateDeleteAllJobUrl = () => {
+    if(!dtId || dtId.indexOf("_OB_") == -1){
+      return;
+    }
+    const {ips=""} = cluster;
+    return ips.split(" ").map(ip =>
+      `http://${ip}:9101/${dtId}/DELETE_JOB_TABLE_KEY?type=DELETE_ALL_INDICES_JOB&objectId=XX`)
   }
   useEffect(() => {
     setTimeout(() => {
@@ -51,7 +103,9 @@ const Dtquery = () => {
           {d.clusterName}
         </Option>
       ));
-      return setClusterOptionList(clusterOptions);
+      setLoading(false);
+      setClusterOptionList(clusterOptions);
+      return setClusterList(rep.data);
     });
   }, ['onConstruct']);
   return (
@@ -76,9 +130,16 @@ const Dtquery = () => {
               style={{
                 width: 200,
               }}
+              loading={loading}
+              value={cluster.clusterName}
               placeholder="选择cluster或手动输入ip"
               optionFilterProp="children"
-              onChange={value => setClusterIps(value)}
+              onChange={(value, option) => setCluster(
+                {
+                  clusterName: option.key,
+                  ips: option.value
+                }
+                )}
               filterOption={(input, option) =>
                 option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
               }
@@ -92,12 +153,21 @@ const Dtquery = () => {
           <Col flex="400px">
             <Input
               placeholder="example：10.243.20.15 10.243.20.55 10.243.20.95"
-              value={clusterIps}
-              onChange={event => setClusterIps(event.target.value)}
+              value={cluster.ips}
+              onChange={event => {
+                const ips = event.target.value;
+                let cls = {};
+                clusterList.forEach(cluster => {
+                  if(cluster.ips == ips){
+                      cls = cluster;
+                  }
+                })
+                setCluster(cls);
+              }}
             />
           </Col>
           <Col>
-            <ClusterModal ips={clusterIps} effectMethod={saveCluster}></ClusterModal>
+            <ClusterModal ips={cluster.ips} effectMethod={saveCluster}></ClusterModal>
           </Col>
         </Row>
         <Row gutter={[10,10]}>
@@ -150,9 +220,15 @@ const Dtquery = () => {
           </Col>
         </Row>
       </div>
-      <UrlGrid title="Chunk" urlList={generateChunkUrl(chunkId)} isShow={clusterIps&&chunkId} needProxy={needProxy}/>
-      <UrlGrid title="RR" urlList={generateRRUrl(chunkId)} isShow={clusterIps&&chunkId} needProxy={needProxy}/>
-      <UrlGrid title="Object" urlList={generateObjectUrl(objectId)} isShow={clusterIps&&objectId} needProxy={needProxy}/>
+      <UrlGrid title="Chunk" urlList={generateChunkUrl(chunkId)} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
+      <UrlGrid title="RR" urlList={generateRRUrl(chunkId)} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
+      <UrlGrid title="Object" urlList={generateObjectUrl(objectId)} isShow={cluster.ips&&objectId} needProxy={needProxy}/>
+      <UrlGrid title="CleanupJob" urlList={generateCleanupJobUrl()} isShow={cluster.ips&&dtId.indexOf("_OB_")!=-1} needProxy={needProxy}/>
+      <UrlGrid title="PartialCleanupJob" urlList={generatePartialCleanupJobUrl()} isShow={cluster.ips&&dtId.indexOf("_OB_")!=-1} needProxy={needProxy}/>
+      <UrlGrid title="DeleteAllJob" urlList={generateDeleteAllJobUrl()} isShow={cluster.ips&&dtId.indexOf("_OB_")!=-1} needProxy={needProxy}/>
+      <UrlGrid title="JOURNAL_REGION" urlList={generateJRUrl()} isShow={cluster.ips&&dtId&&vdc} needProxy={needProxy}/>
+      <UrlGrid title="JounalContent" urlList={generateJounalContentUrl()} isShow={cluster.ips&&dtId&&vdc} needProxy={needProxy}/>
+      <UrlGrid title="BPLUSTREE_INFO" urlList={generateBIUrl()} isShow={cluster.ips&&dtId&&vdc} needProxy={needProxy}/>
       <div
         style={{
           paddingTop: 100,
