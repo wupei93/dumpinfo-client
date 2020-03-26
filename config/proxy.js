@@ -5,10 +5,11 @@
  * For details, please see
  * https://pro.ant.design/docs/deploy
  */
+const server = 'http://localhost:8881';
 export default {
   dev: {
     '/api/': {
-      target: 'http://localhost:8881',
+      target: server,
       changeOrigin: true,
       pathRewrite: {
         '^/api': '',
@@ -17,7 +18,7 @@ export default {
   },
   test: {
     '/api/': {
-      target: 'http://localhost:8881',
+      target: server,
       changeOrigin: true,
       pathRewrite: {
         '^/api': '',
@@ -26,7 +27,7 @@ export default {
   },
   pre: {
     '/api/': {
-      target: 'http://localhost:8881',
+      target: server,
       changeOrigin: true,
       pathRewrite: {
         '^/api': '',

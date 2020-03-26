@@ -1,6 +1,7 @@
 import React from 'react';
 import { Row, Col, Divider, Button } from 'antd';
 import styles from './index.less';
+import {server} from '../../../global.js';
 
 function proxyUrl(needProxy,url) {
   if(!needProxy){
@@ -8,7 +9,7 @@ function proxyUrl(needProxy,url) {
   }
   const host = url.substring(7, url.indexOf(':9101'));
   const path = url.substring(url.indexOf(':9101')+5);
-  return 'http://localhost:8881/proxy'.concat(path)
+  return `${server}/proxy`.concat(path)
     .concat(path.indexOf('?') !== -1 ? '&':'?')
     .concat("host=").concat(host);
 }
