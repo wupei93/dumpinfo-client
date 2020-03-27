@@ -1,9 +1,10 @@
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import React, { useState, useEffect } from 'react';
 import { Spin, Row, Col, Divider, Input, Select, Switch, Tooltip} from 'antd';
-import { queryClusterList, saveCluster } from './service.js';
+import { queryClusterList, saveCluster, queryVDCs} from './service.js';
 import styles from './index.less';
 import UrlGrid from './UrlGrid';
+import InfoGrid from './InfoGrid';
 import ClusterModal from './ClusterModal';
 
 const Dtquery = () => {
@@ -16,6 +17,7 @@ const Dtquery = () => {
   const [needProxy, setNeedProxy] = useState(false);
   const [clusterList, setClusterList] = useState([]);
   const [clusterOptionList, setClusterOptionList] = useState([]);
+  const [vdcList, setVdcList] = useState([]);
   const generateChunkUrl = chunkId => {
     const {ips=""} = cluster;
     return ips.split(" ").map(ip =>{
@@ -88,12 +90,7 @@ const Dtquery = () => {
     return ips.split(" ").map(ip =>
       `http://${ip}:9101/${dtId}/DELETE_JOB_TABLE_KEY?type=DELETE_ALL_INDICES_JOB&objectId=XX`)
   }
-  useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  }, []);
-  useEffect(() => {
+  const refreshClusterList = () => {
     queryClusterList().then(rep => {
       if(!rep || !rep.data){
         return;
@@ -107,7 +104,17 @@ const Dtquery = () => {
       setClusterOptionList(clusterOptions);
       return setClusterList(rep.data);
     });
-  }, ['onConstruct']);
+  }
+  useEffect(() => {
+    refreshClusterList();
+  }, []);
+  useEffect(() => {
+    queryVDCs(cluster.ips).then(rep => {
+      if(rep && rep.status==200){
+        setVdcList(rep.data);
+      }
+    });
+  }, [cluster.ips]);
   return (
     <PageHeaderWrapper content="根据IP生成常用的dtquery链接" className={styles.main}>
       <div>
@@ -156,7 +163,7 @@ const Dtquery = () => {
               value={cluster.ips}
               onChange={event => {
                 const ips = event.target.value;
-                let cls = {};
+                let cls = {ips};
                 clusterList.forEach(cluster => {
                   if(cluster.ips == ips){
                       cls = cluster;
@@ -167,7 +174,7 @@ const Dtquery = () => {
             />
           </Col>
           <Col>
-            <ClusterModal ips={cluster.ips} effectMethod={saveCluster}></ClusterModal>
+            <ClusterModal isShow={cluster.ips&&!cluster.clusterName} ips={cluster.ips} saveCluster={saveCluster} refreshClusterList={refreshClusterList}></ClusterModal>
           </Col>
         </Row>
         <Row gutter={[10,10]}>
@@ -220,6 +227,7 @@ const Dtquery = () => {
           </Col>
         </Row>
       </div>
+      <InfoGrid title="VDC" infoList={vdcList}></InfoGrid>
       <UrlGrid title="Chunk" urlList={generateChunkUrl(chunkId)} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
       <UrlGrid title="RR" urlList={generateRRUrl(chunkId)} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
       <UrlGrid title="Object" urlList={generateObjectUrl(objectId)} isShow={cluster.ips&&objectId} needProxy={needProxy}/>

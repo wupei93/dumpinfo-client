@@ -34,4 +34,14 @@ export default {
       },
     },
   },
+  proxyUrl: (needProxy,url) => {
+    if(!needProxy){
+      return url;
+    }
+    const host = url.substring(7, url.indexOf(':9101'));
+    const path = url.substring(url.indexOf(':9101')+5);
+    return `${server}/proxy`.concat(path)
+      .concat(path.indexOf('?') !== -1 ? '&':'?')
+      .concat("host=").concat(host);
+  },
 };

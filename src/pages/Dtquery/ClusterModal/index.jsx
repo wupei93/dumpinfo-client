@@ -5,14 +5,18 @@ const ClusterModal = props => {
     const [visible, setVisible] = useState(false);
     const [clusterName, setClusterName] = useState("");
     const [loading, setLoading] = useState(false);
-    const {ips, effectMethod} = props;
+    const {isShow, ips, saveCluster, refreshClusterList} = props;
+    if(!isShow){
+      return null;
+    }
 
     const onOk = () => {
-        effectMethod({clusterName, ips}).then(rep => {
+      saveCluster({clusterName, ips}).then(rep => {
             if(!rep || rep.status!==200){
-                message.error('保存失败');
+                message.error(`保存失败:clusterName=${clusterName},ips=${ips}`);
             } else{
                 message.success('保存成功');
+                refreshClusterList();
             }
             setLoading(false);
             setVisible(false);

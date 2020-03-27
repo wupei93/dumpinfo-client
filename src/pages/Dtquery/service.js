@@ -10,3 +10,12 @@ export async function saveCluster(params) {
     data: { ...params},
   });
 }
+
+export async function queryVDCs(ips) {
+  if(!ips){
+    return;
+  }
+  return request(`/api/cluster/queryVDCs?ips=${ips}`, {
+    method: 'GET',
+  });
+}
