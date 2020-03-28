@@ -19,3 +19,9 @@ export async function queryVDCs(ips) {
     method: 'GET',
   });
 }
+
+export async function queryChunkLocation(host, chunkId) {
+  return request(`/api/chunk/queryChunkLocation?host=${host}&chunkId=${chunkId}`, {
+    method: 'GET',
+  });
+}

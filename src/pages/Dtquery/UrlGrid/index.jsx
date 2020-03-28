@@ -1,6 +1,5 @@
 import React from 'react';
-import { Row, Col, Divider, Button } from 'antd';
-import styles from './index.less';
+import { Row, Divider, Button, Spin } from 'antd';
 import proxy from '@/../config/proxy.js';
 
 
@@ -11,6 +10,7 @@ const UrlGrid = props => {
   }
   const {proxyUrl} = proxy;
   const urls = urlList.map(url => <Row><a target="view_window" href={proxyUrl(needProxy,url)}>{url}</a></Row>);
+  const openAllButton = urls&&urls.length>1 ? <Row><Button onClick={openAll}>打开全部</Button></Row> : null;
   const openAll = () => {
     urlList.forEach(url => window.open(proxyUrl(needProxy,url), '_blank').location)
   }
@@ -25,8 +25,9 @@ const UrlGrid = props => {
         >
           {title}
         </Divider>
-        <Row><Button onClick={openAll}>打开全部</Button></Row>
+        {openAllButton}
         {urls}
+        <Spin spinning={!urls || urls.length == 0} size="large" />
       </div>
   );
 };

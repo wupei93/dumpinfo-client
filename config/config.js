@@ -105,8 +105,7 @@ export default {
             {
               path: '/',
               redirect: '/dtquery',
-            },
-            // {
+            }, // {
             //   path: '/welcome',
             //   name: 'welcome',
             //   icon: 'smile',
@@ -136,9 +135,15 @@ export default {
             // },
             {
               name: 'dtquery',
-              icon: 'smile',
+              icon: 'table',
               path: '/dtquery',
               component: './Dtquery',
+            },
+            {
+              name: 'help',
+              icon: 'smile',
+              path: '/help',
+              component: './Help',
             },
             {
               component: './404',
