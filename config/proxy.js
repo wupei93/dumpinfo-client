@@ -5,7 +5,7 @@
  * For details, please see
  * https://pro.ant.design/docs/deploy
  */
-const server = 'http://localhost:8881';
+const server = 'http://10.247.99.224:8881';
 export default {
   dev: {
     '/api/': {

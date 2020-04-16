@@ -19,8 +19,8 @@ const Dtquery = () => {
   const [clusterList, setClusterList] = useState([]);
   const [clusterOptionList, setClusterOptionList] = useState([]);
   const [vdcList, setVdcList] = useState([]);
-  const [chunkUrl, setChunkUrl] = useState();
-  const [rrUrl, setRRUrl] = useState();
+  const [chunkUrlList, setChunkUrlList] = useState([]);
+  const [rrUrlList, setRRUrlList] = useState([]);
   const generateChunkUrl = chunkId => {
     const {ips=""} = cluster;
     return ips.split(" ").map(ip =>{
@@ -123,23 +123,28 @@ const Dtquery = () => {
     if(!ips || !chunkId) {
       return;
     }
-    queryChunkLocation(ips.split(" ")[0], chunkId).then(rep => {
+    const tmpChunkUrlList = [];
+    const tmpRRUrlList = [];
+    ips.split(" ").forEach(ip => queryChunkLocation(ip, chunkId).then(rep => {
       if(rep && rep.status==200 && rep.data){
          try{
            const ip = rep.data.left;
            const dtId = rep.data.right;
            const chunkUrl = `http://${ip}:9101/${dtId}/CHUNK?showvalue=gpb&chunkId=${chunkId}`;
            const rrUrl = `http://${ip}:9101/${dtId.replace('CT_','RR_').replace('128_1','128_0')}/REPO_REFERENCE?chunkId=${chunkId}`;
-           setChunkUrl([chunkUrl]);
-           return setRRUrl([rrUrl]);
+           tmpChunkUrlList.push(chunkUrl)
+           tmpRRUrlList.push(rrUrl)
+           setChunkUrlList(tmpChunkUrlList);
+           setRRUrlList(tmpRRUrlList);
          } catch(e){
-          setChunkUrl([]);
-          setRRUrl([]);
+          // setChunkUrlList([]);
+          // setRRUrl([]);
           return message.error(`查询chunk location失败:${e}`);
          }
+      } else{
+        message.error('查询chunk location失败');
       }
-      message.error('查询chunk location失败');
-    });
+    }));
   }, [chunkId, cluster.ips]);
   return (
     <PageHeaderWrapper content="根据IP生成常用的dtquery链接" className={styles.main}>
@@ -257,8 +262,8 @@ const Dtquery = () => {
         </Row>
       </div>
       <InfoGrid title="VDC" infoList={vdcList}></InfoGrid>
-      <UrlGrid title="Chunk" urlList={chunkUrl} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
-      <UrlGrid title="RR" urlList={rrUrl} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
+      <UrlGrid title="Chunk" urlList={chunkUrlList} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
+      <UrlGrid title="RR" urlList={rrUrlList} isShow={cluster.ips&&chunkId} needProxy={needProxy}/>
       <UrlGrid title="Object" urlList={generateObjectUrl(objectId)} isShow={cluster.ips&&objectId} needProxy={needProxy}/>
       <UrlGrid title="CleanupJob" urlList={generateCleanupJobUrl()} isShow={cluster.ips&&dtId.indexOf("_OB_")!=-1} needProxy={needProxy}/>
       <UrlGrid title="PartialCleanupJob" urlList={generatePartialCleanupJobUrl()} isShow={cluster.ips&&dtId.indexOf("_OB_")!=-1} needProxy={needProxy}/>
